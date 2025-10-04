@@ -3,63 +3,38 @@
 namespace App\Services;
 
 use App\Models\Item;
+use App\Repositories\ItemRepository;
 
 class ItemService
 {
-    /**
-     * Retorna todos os itens.
-     */
+    private ItemRepository $itemRepository;
+    public function __construct(ItemRepository $itemRepository)
+    {
+        $this->itemRepository = $itemRepository;
+    }
+
     public function get()
     {
-        return Item::all();
+        return $this->itemRepository->get();
     }
 
-    /**
-     * Cria um novo item.
-     */
-    public function store(array $data): Item
+    public function store($data)
     {
-        return Item::create($data);
+        return $this->itemRepository->store($data);
     }
 
-    /**
-     * Busca um item específico pelo ID.
-     * Retorna null se não encontrar.
-     */
-    public function details(string $id): ?Item
+    public function details($id)
     {
-        return Item::find($id);
+        return $this->itemRepository->details($id);
     }
 
-    /**
-     * Atualiza um item existente.
-     * Retorna o item atualizado ou null se não encontrar.
-     */
-    public function update(array $data, string $id): ?Item
+    public function update($id, $data)
     {
-        $item = Item::find($id);
-
-        if ($item) {
-            $item->update($data);
-
-            return $item;
-        }
-
-        return null;
+        return $this->itemRepository->update($id, $data);
     }
 
-    /**
-     * Apaga um item.
-     * Retorna true se foi sucesso, false se o item não foi encontrado.
-     */
-    public function destroy(string $id): bool
+    public function destroy($id)
     {
-        $item = Item::find($id);
-
-        if ($item) {
-            return $item->delete();
-        }
-
-        return false;
+        return $this->itemRepository->destroy($id); // apaga o item
     }
 }

@@ -25,6 +25,7 @@ class ItemStoreRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'required|string|max:511',
             'price' => 'required|numeric|min:0',
+            'item_type_id' => 'required|exists:item_types,id',
         ];
     }
 }

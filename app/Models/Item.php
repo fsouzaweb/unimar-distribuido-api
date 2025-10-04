@@ -9,5 +9,16 @@ class Item extends Model
 {
     use SoftDeletes;
     protected $table = 'items';
-    protected $fillable = ['name', 'description', 'price'];
+    protected $fillable = [
+        'name',
+        'description',
+        'price',
+        'item_type_id'
+    ];
+
+    public function Type()
+    {
+        return $this->belongsTo(ItemType::class,'item_type_id','id');
+    }
+
 }

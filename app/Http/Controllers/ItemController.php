@@ -4,69 +4,75 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ItemStoreRequest;
 use App\Http\Requests\ItemUpdateRequest;
+use App\Http\Resources\ItemResource;
+use App\Models\Item;
 use App\Services\ItemService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\Request;
 
 class ItemController extends Controller
 {
-    public function __construct(private ItemService $itemService)
+    private ItemService $itemService;
+
+    public function __construct(ItemService $itemService)
     {
+        $this->itemService = $itemService;
     }
 
-    // get all
     public function get()
     {
         $items = $this->itemService->get();
-
-        return response()->json($items);
+        return ItemResource::collection($items);
     }
 
-    // store
     public function store(ItemStoreRequest $request)
     {
-        $item = $this->itemService->store($request->validated());
+        $data = $request->validated();
 
-        return response()->json([
-            'message' => 'Item created successfully',
-            'item' => $item,
-        ], 201);
+        $item = $this->itemService->store($data);
+
+        return new ItemResource($item);
+
     }
 
-    // details
     public function details($id)
     {
-        $item = $this->itemService->details($id);
+        try {
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
+            $item = $this->itemService->details($id);
+            return new ItemResource($item);
+
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => "Item Not Found"
+            ], 404);
         }
-
-        return response()->json($item);
     }
 
-    // update
     public function update(ItemUpdateRequest $request, $id)
     {
-        $item = $this->itemService->update($request->validated(), $id);
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
+        $data = $request->validated();
+        try {
+            $item = $this->itemService->update($id, $data);
+            return  new ItemResource($item);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => "Item Not Found"
+            ], 404);
         }
 
-        return response()->json([
-            'message' => 'Item updated successfully',
-            'item' => $item,
-        ]);
     }
 
-    // destroy
     public function destroy($id)
     {
-        $deleted = $this->itemService->destroy($id);
-
-        if (!$deleted) {
-            return response()->json(['message' => 'Item not found'], 404);
+        try {
+            $item = $this->itemService->destroy($id);
+            return new ItemResource($item);
+        } catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => "Item Not Found"
+            ], 404);
         }
-
-        return response()->json(null, 204);
     }
 }
