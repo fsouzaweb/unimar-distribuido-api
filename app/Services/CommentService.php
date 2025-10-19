@@ -28,12 +28,12 @@ class CommentService
     public function createComment(array $data)
     {
         $data['user_id'] = Auth::id();
-        
+
         $comment = $this->commentRepository->create($data);
-        
+
         // Despacha o job de notificação em segundo plano
         dispatch(new SendCommentNotificationJob($comment));
-        
+
         return $comment->load(['author', 'post']);
     }
 

@@ -1,0 +1,785 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API de Blog Pessoal",
+    "version": "1.0.0",
+    "description": "API RESTful completa para um sistema de blog pessoal desenvolvida em Laravel com autenticação JWT como trabalho de conclusão da matéria Sistemas Distribuídos e API da PÓS em FullStack da Unimar.",
+    "contact": {
+      "name": "Fabiano Souza de Oliveira",
+      "email": "fsouzaweb@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api",
+      "description": "Servidor de Desenvolvimento"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Autenticação JWT. Use: Bearer {seu_token_jwt}"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer", "example": 1},
+          "name": {"type": "string", "example": "Fabiano Souza"},
+          "email": {"type": "string", "format": "email", "example": "fabiano@blog.com"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer", "example": 1},
+          "name": {"type": "string", "example": "Laravel"},
+          "slug": {"type": "string", "example": "laravel"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer", "example": 1},
+          "title": {"type": "string", "example": "Meu Primeiro Post"},
+          "content": {"type": "string", "example": "Conteúdo do post..."},
+          "published_at": {"type": "string", "format": "date-time"},
+          "author": {"$ref": "#/components/schemas/User"},
+          "category": {"$ref": "#/components/schemas/Category"},
+          "tags": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/Tag"}
+          },
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer", "example": 1},
+          "name": {"type": "string", "example": "Laravel"},
+          "slug": {"type": "string", "example": "laravel"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer", "example": 1},
+          "body": {"type": "string", "example": "Ótimo post, parabéns!"},
+          "author": {"$ref": "#/components/schemas/User"},
+          "post": {"$ref": "#/components/schemas/Post"},
+          "created_at": {"type": "string", "format": "date-time"},
+          "updated_at": {"type": "string", "format": "date-time"}
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Endpoints para registro, login e gerenciamento de autenticação"
+    },
+    {
+      "name": "Categorias",
+      "description": "CRUD completo para gerenciamento de categorias"
+    },
+    {
+      "name": "Posts",
+      "description": "CRUD completo para gerenciamento de posts do blog"
+    },
+    {
+      "name": "Comentários",
+      "description": "Gerenciamento de comentários em posts"
+    },
+    {
+      "name": "Tags",
+      "description": "CRUD completo para gerenciamento de tags"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Registrar novo usuário",
+        "description": "Cria uma nova conta de usuário no sistema",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "email", "password", "password_confirmation"],
+                "properties": {
+                  "name": {"type": "string", "example": "Fabiano Souza"},
+                  "email": {"type": "string", "format": "email", "example": "fabiano@blog.com"},
+                  "password": {"type": "string", "format": "password", "example": "password"},
+                  "password_confirmation": {"type": "string", "format": "password", "example": "password"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Usuário registrado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"},
+                    "token": {"type": "string", "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."}
+                  }
+                }
+              }
+            }
+          },
+          "422": {"description": "Dados de validação inválidos"},
+          "500": {"description": "Erro interno do servidor"}
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Fazer login",
+        "description": "Autentica um usuário e retorna um token JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {"type": "string", "format": "email", "example": "fabiano@blog.com"},
+                  "password": {"type": "string", "format": "password", "example": "password"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {"$ref": "#/components/schemas/User"},
+                    "token": {"type": "string", "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Credenciais inválidas"}
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Fazer logout",
+        "description": "Invalida o token JWT atual do usuário",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Logout realizado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "example": "Logout realizado com sucesso"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Token inválido ou não fornecido"}
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": ["Autenticação"],
+        "summary": "Renovar token JWT",
+        "description": "Gera um novo token JWT usando o token atual",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Token renovado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {"type": "string", "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Token inválido ou expirado"}
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": ["Autenticação"],
+        "summary": "Obter dados do usuário autenticado",
+        "description": "Retorna os dados do usuário atualmente autenticado",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Dados do usuário obtidos com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/User"}
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Token inválido ou não fornecido"}
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "tags": ["Categorias"],
+        "summary": "Listar todas as categorias",
+        "description": "Retorna uma lista paginada de todas as categorias",
+        "security": [{"bearerAuth": []}],
+        "responses": {
+          "200": {
+            "description": "Lista de categorias obtida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Category"}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {"description": "Não autenticado"}
+        }
+      },
+      "post": {
+        "tags": ["Categorias"],
+        "summary": "Criar nova categoria",
+        "description": "Cria uma nova categoria no sistema",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string", "example": "Laravel 11"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Categoria criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Category"}
+                  }
+                }
+              }
+            }
+          },
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      }
+    },
+    "/categories/{id}": {
+      "get": {
+        "tags": ["Categorias"],
+        "summary": "Exibir categoria específica",
+        "description": "Retorna os dados de uma categoria específica",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoria encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Category"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Categoria não encontrada"}
+        }
+      },
+      "put": {
+        "tags": ["Categorias"],
+        "summary": "Atualizar categoria",
+        "description": "Atualiza os dados de uma categoria existente",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string", "example": "Laravel 12"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Categoria atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Category"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Categoria não encontrada"},
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      },
+      "delete": {
+        "tags": ["Categorias"],
+        "summary": "Excluir categoria",
+        "description": "Remove uma categoria do sistema",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da categoria",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categoria excluída com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "example": "Categoria excluída com sucesso"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Categoria não encontrada"}
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Listar todos os posts",
+        "description": "Retorna uma lista de posts com filtros opcionais",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "query",
+            "description": "Filtrar por categoria",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Filtrar por autor",
+            "schema": {"type": "integer"}
+          },
+          {
+            "name": "published",
+            "in": "query",
+            "description": "Filtrar por status de publicação",
+            "schema": {"type": "boolean"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de posts obtida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Post"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Criar novo post",
+        "description": "Cria um novo post no blog",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["title", "content", "category_id"],
+                "properties": {
+                  "title": {"type": "string", "example": "Meu Novo Post"},
+                  "content": {"type": "string", "example": "Este é o conteúdo do meu post..."},
+                  "category_id": {"type": "integer", "example": 1},
+                  "published_at": {"type": "string", "format": "date-time", "example": "2024-01-15T10:00:00Z"},
+                  "tag_ids": {
+                    "type": "array",
+                    "items": {"type": "integer"},
+                    "example": [1, 2, 3]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Post"}
+                  }
+                }
+              }
+            }
+          },
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      }
+    },
+    "/comments": {
+      "get": {
+        "tags": ["Comentários"],
+        "summary": "Listar comentários",
+        "description": "Lista comentários do usuário ou de um post específico",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "query",
+            "description": "ID do post para filtrar comentários",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de comentários obtida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Comment"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Comentários"],
+        "summary": "Criar novo comentário",
+        "description": "Cria um novo comentário em um post (dispara job de notificação)",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["body", "post_id"],
+                "properties": {
+                  "body": {"type": "string", "example": "Ótimo post, parabéns!"},
+                  "post_id": {"type": "integer", "example": 1}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comentário criado com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Comment"}
+                  }
+                }
+              }
+            }
+          },
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      }
+    },
+    "/tags": {
+      "get": {
+        "tags": ["Tags"],
+        "summary": "Listar todas as tags",
+        "description": "Retorna uma lista de tags, com opção de listar as mais populares",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "popular",
+            "in": "query",
+            "description": "Listar apenas tags populares",
+            "schema": {"type": "boolean"}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limite de tags populares (padrão: 10)",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de tags obtida com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {"$ref": "#/components/schemas/Tag"}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Tags"],
+        "summary": "Criar nova tag",
+        "description": "Cria uma nova tag no sistema",
+        "security": [{"bearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string", "example": "Vue.js"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Tag"}
+                  }
+                }
+              }
+            }
+          },
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      }
+    },
+    "/tags/{id}": {
+      "get": {
+        "tags": ["Tags"],
+        "summary": "Exibir tag específica",
+        "description": "Retorna os dados de uma tag específica",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da tag",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Tag"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Tag não encontrada"}
+        }
+      },
+      "put": {
+        "tags": ["Tags"],
+        "summary": "Atualizar tag",
+        "description": "Atualiza os dados de uma tag existente",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da tag",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": {"type": "string", "example": "React.js"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag atualizada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"$ref": "#/components/schemas/Tag"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Tag não encontrada"},
+          "422": {"description": "Dados de validação inválidos"}
+        }
+      },
+      "delete": {
+        "tags": ["Tags"],
+        "summary": "Excluir tag",
+        "description": "Remove uma tag do sistema",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "ID da tag",
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag excluída com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {"type": "string", "example": "Tag excluída com sucesso"}
+                  }
+                }
+              }
+            }
+          },
+          "404": {"description": "Tag não encontrada"}
+        }
+      }
+    }
+  }
+}
